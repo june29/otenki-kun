@@ -1,6 +1,16 @@
 from m5stack import lcd
 import time, machine, urequests, ujson
 
+lcd.clear()
+
+rtc = machine.RTC()
+rtc.ntp_sync(server="ntp.jst.mfeed.ad.jp", tz="JST-9")
+while not rtc.synced():
+  time.sleep_ms(100)
+
+url = "https://"
+counter = 0
+
 def render():
   lcd.font(lcd.FONT_Default, transparent=True, fixedwidth=False)
   lcd.text(lcd.RIGHT, 220, "Loading...", lcd.DARKGREY)
@@ -27,24 +37,16 @@ def render():
   lcd.font(lcd.FONT_Default, transparent=True, fixedwidth=False)
   lcd.text(lcd.CENTER, 220, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), lcd.DARKGREY)
 
-lcd.clear()
-
-rtc = machine.RTC()
-rtc.ntp_sync(server="ntp.jst.mfeed.ad.jp", tz="JST-9")
-while not rtc.synced():
-  time.sleep_ms(100)
-
-url = "https://"
-
-last_updated = None
-
 while True:
-  if last_updated is None or buttonC.wasPressed():
-    render()
-    last_updated = time.time()
+  if counter == 1500:
+    counter = 0
 
-  if (last_updated is not None) and ((time.time() - last_updated) > 3600):
+  if counter == 0:
     render()
-    last_updated = time.time()
 
-  time.sleep_ms(100)
+  counter += 1
+  time.sleep_ms(1000)
+
+  lcd.rect(0, 220, 80, 20, lcd.WHITE, lcd.WHITE)
+  lcd.font(lcd.FONT_Default, transparent=True, fixedwidth=False)
+  lcd.text(10, 220, "%04d" % (counter), lcd.DARKGREY)
